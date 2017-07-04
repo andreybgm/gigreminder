@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="screen_main" type="id"/>
+    <item name="screen_concerts" type="id"/>
+    <item name="screen_concert_details" type="id"/>
+    <item name="screen_artists" type="id"/>
+    <item name="screen_edit_artist" type="id"/>
+    <item name="screen_import_artists" type="id"/>
+    <item name="screen_locations" type="id"/>
+    <item name="screen_location_choice" type="id"/>
+</resources>

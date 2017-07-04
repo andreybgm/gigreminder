@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:minHeight="@dimen/height_two_line_list_item"
+    android:paddingBottom="@dimen/padding_vertical_two_line_list_item"
+    android:paddingLeft="@dimen/padding_medium"
+    android:paddingRight="@dimen/padding_medium"
+    android:paddingTop="@dimen/padding_vertical_two_line_list_item">
+
+    <TextView
+        android:id="@+id/text_artist"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="@dimen/margin_medium"
+        android:textColor="@color/primary_text"
+        android:textSize="@dimen/text_size_primary_list_item"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/text_date"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Some very long artist name"/>
+
+    <TextView
+        android:id="@+id/text_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/secondary_text"
+        android:textSize="@dimen/text_size_auxiliary_list_item"
+        app:layout_constraintBaseline_toBaselineOf="@+id/text_artist"
+        app:layout_constraintLeft_toRightOf="@+id/text_artist"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:text="Mon, Sep 29, 2017"/>
+
+    <TextView
+        android:id="@+id/text_place"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/margin_small"
+        android:textColor="@color/accent_text"
+        android:textSize="@dimen/text_size_secondary_list_item"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_artist"
+        tools:text="Saint Petersburg, Main Concert Hall"/>
+
+</android.support.constraint.ConstraintLayout>

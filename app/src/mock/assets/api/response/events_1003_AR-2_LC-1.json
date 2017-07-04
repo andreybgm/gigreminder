@@ -1,0 +1,16 @@
+{
+  "id":1003,
+  "title": "concert Artist2",
+  "short_title": "Artist2",
+  "dates":[
+    {
+      "start":1495209600,
+      "end":1495209600
+    }
+  ],
+  "place":{
+    "id":2001
+  },
+  "categories":["concert"],
+  "site_url":"http://example.com/events/1003"
+}

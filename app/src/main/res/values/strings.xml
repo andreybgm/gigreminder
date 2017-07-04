@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">Gig reminder</string>
+
+    <string name="action_delete">Delete</string>
+    <string name="action_save">Save</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_import_google_music">Import from Google Music</string>
+
+    <string name="title_tab_artists">Artists</string>
+    <string name="title_tab_concerts">Concerts</string>
+    <string name="title_tab_locations">Locations</string>
+
+    <string name="artist_name">Name</string>
+    <string name="new_artist">New artist</string>
+    <string name="existing_artist">Artist</string>
+    <string name="edit_artist">Edit artist</string>
+    <string name="dialog_discard_new_artist">Discard new artist?</string>
+    <string name="dialog_discard_artist_changes">Discard changes?</string>
+
+    <string name="concerts_empty_list">There are no concerts</string>
+    <string name="concerts_sync">Loading concerts</string>
+
+    <string name="artists_empty_list">You have no tracked artists</string>
+
+    <string name="locations_empty_list">You have no chosen locations</string>
+
+    <string name="location_choice_title">Choose your location</string>
+    <string name="location_choice_empty_list">There are no more available locations</string>
+
+    <string name="artist_import_title">Import artists</string>
+    <string name="artist_import_empty_list">There are no available artists to import</string>
+    <string name="artist_import_retry">Retry</string>
+    <string name="artist_import_error_no_artists_to_save">No selected artists to import</string>
+
+    <string name="error_loading_data">Error loading data</string>
+    <string name="error_saving_data">Error saving data</string>
+    <string name="error_deletion_data">Error deletion data</string>
+    <string name="error_artist_name_empty">The artist\'s name should not be empty</string>
+    <string name="error_artist_name_not_unique">The artist with the same name already exists</string>
+
+    <string name="dialog_loading">Loading…</string>
+    <string name="dialog_saving">Saving…</string>
+    <string name="artist_import_error_message">Unfortunately, we were unable to load artists from Google Music. \n\nTry the following:\n 1. Make sure Google Music is installed\n 2. Open the Google Music app\n 3. Click the \"Retry\" button.</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_select_nothing">Select nothing</string>
+
+    <string name="sync_provider_label">Concerts</string>
+    <string name="sync_account_name">Sync account</string>
+
+    <string name="notification_new_concert">New concert</string>
+    <string name="notification_new_concerts">New concerts</string>
+    <string name="open_site">open site</string>
+</resources>

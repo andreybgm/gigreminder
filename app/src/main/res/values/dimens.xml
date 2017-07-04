@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_large">24dp</dimen>
+    <dimen name="margin_edit_text_medium">12dp</dimen>
+
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_large">24dp</dimen>
+
+    <dimen name="margin_fab">16dp</dimen>
+    <dimen name="elevation_toolbar">4dp</dimen>
+
+    <dimen name="text_size_primary_list_item">16sp</dimen>
+    <dimen name="text_size_secondary_list_item">14sp</dimen>
+    <dimen name="text_size_auxiliary_list_item">12sp</dimen>
+    <dimen name="height_single_line_list_item">48dp</dimen>
+    <dimen name="height_two_line_list_item">72dp</dimen>
+    <dimen name="padding_vertical_two_line_list_item">20dp</dimen>
+
+    <dimen name="text_size_primary_card">24sp</dimen>
+    <dimen name="text_size_additional_card">14sp</dimen>
+</resources>

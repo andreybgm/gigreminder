@@ -1,0 +1,18 @@
+{
+  "id": 1009,
+  "title": "Concert Triple Artist Name",
+  "short_title": "Triple Artist Name",
+  "dates": [
+    {
+      "start": 1495728000,
+      "end": 1495728000
+    }
+  ],
+  "place": {
+    "id": 2001
+  },
+  "categories": [
+    "concert"
+  ],
+  "site_url": "http://example.com/events/1009"
+}

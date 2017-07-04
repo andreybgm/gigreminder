@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MOCK Gig reminder</string>
+    <string name="sync_account_type">io.github.andreybgm.gigreminder.mock.debug.sync</string>
+    <string name="sync_authority">io.github.andreybgm.gigreminder.mock.debug.provider.sync</string>
+</resources>

@@ -1,0 +1,17 @@
+{
+  "id": 1005,
+  "title": "concert Some very long artist name",
+  "dates": [
+    {
+      "start": 1495296000,
+      "end": 1495296000
+    }
+  ],
+  "place": {
+    "id": 2001
+  },
+  "categories": [
+    "concert"
+  ],
+  "site_url": "http://example.com/events/1005"
+}
