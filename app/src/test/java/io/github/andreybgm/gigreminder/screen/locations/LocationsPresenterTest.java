@@ -151,7 +151,7 @@ public class LocationsPresenterTest {
     }
 
     @Test
-    public void deleteLocationWithError() throws Exception {
+    public void deleteLocationWhenError() throws Exception {
         when(repository.deleteLocation(any())).thenReturn(Completable.error(
                 new RuntimeException()));
         LocationsPresenter presenter = presenterBuilder.uiModel(withLocationsUiModel).build();
@@ -211,7 +211,7 @@ public class LocationsPresenterTest {
     }
 
     @Test
-    public void saveLocationWithError() throws Exception {
+    public void saveLocationWhenError() throws Exception {
         when(repository.saveLocation(any())).thenReturn(Completable.error(
                 new RuntimeException()));
 

@@ -167,7 +167,7 @@ public class ArtistImportPresenterTest {
     }
 
     @Test
-    public void artistClickWhenActionModeOnShouldSelectArtist() throws Exception {
+    public void artistClickShouldSelectArtist() throws Exception {
         ArtistImportPresenter presenter = presenterBuilder.uiModel(oneSelectedArtistUiModel)
                 .build();
 
