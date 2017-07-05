@@ -29,6 +29,6 @@ The app uses reactive state management approach that is perfectly explained in [
 
 ### The demo ###
 
-The short demo video is available below
+This short video demonstrates the main usage scenario:
 
 [![Gig reminder](https://raw.githubusercontent.com/andreybgm/andreybgm.github.io/master/images/gig_reminder.png)](https://youtu.be/tWzYCsIxbGE "Gig reminder")
