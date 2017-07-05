@@ -21,7 +21,7 @@ public final class SyncManager {
     private static final String LOG_TAG = SyncManager.class.getSimpleName();
     private static final String BUNDLE_ATTEMPT = "ATTEMPT";
     private static final int SYNC_PERIOD_HOURS = 6;
-    private static final int DEBUG_SYNC_PERIOD_HOURS = 1;
+    private static final int DEBUG_SYNC_PERIOD_HOURS = 4;
     private static final int MAX_REPEATED_SYNC_ATTEMPT = 10;
 
     public static void init(Context context) {

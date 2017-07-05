@@ -108,7 +108,7 @@ public class EditArtistActivity extends AppCompatActivity implements
 
         compositeDisposable.add(
                 presenter.getUiModels()
-                        .compose(RxUtils.observeOnUi())
+                        .compose(RxUtils.observeOnUiWithDebounce())
                         .subscribe(this::acceptUiModel)
         );
     }
@@ -157,13 +157,13 @@ public class EditArtistActivity extends AppCompatActivity implements
     }
 
     private void acceptUiModel(EditArtistUiModel newModel) {
-        if (newModel.isLoadingError()) {
-            Toast.makeText(this, R.string.error_loading_data, Toast.LENGTH_SHORT).show();
+        if (newModel.isShouldClose()) {
             finish();
             return;
         }
 
-        if (newModel.isShouldClose()) {
+        if (newModel.isLoadingError()) {
+            Toast.makeText(this, R.string.error_loading_data, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -180,6 +180,8 @@ public class EditArtistActivity extends AppCompatActivity implements
             return;
         }
 
+        toolbar.setTitle(newModel.isArtistNew() ? R.string.new_artist : R.string.existing_artist);
+
         boolean shouldFillViewData = !newModel.isArtistNew()
                 && !newModel.isLoading()
                 && !newModel.isViewDataIsFilled();
@@ -191,7 +193,6 @@ public class EditArtistActivity extends AppCompatActivity implements
         }
 
         uiModel = newModel;
-        toolbar.setTitle(newModel.isArtistNew() ? R.string.new_artist : R.string.existing_artist);
 
         if (newModel.isFillError() && newModel.isEmptyNameError()) {
             showEmptyNameError();

@@ -118,13 +118,13 @@ public class ArtistImportPresenter extends BasePresenter<ArtistImportUiModel> {
                     .artists(Collections.emptyList())
                     .build();
         } else if (result.isSuccess()) {
-            List<String> artists = result.getArtists();
+            List<String> names = result.getArtists();
 
             ArtistImportUiModel.Builder builder = model.copy()
                     .loading(false)
                     .loadingError(false)
                     .firstLoading(false)
-                    .artists(artists);
+                    .artists(names);
 
             boolean selectAll = model.isFirstLoading()
                     && !model.getInitialSelectedArtistNames().isPresent();
@@ -133,7 +133,7 @@ public class ArtistImportPresenter extends BasePresenter<ArtistImportUiModel> {
 
             if (selectByInitial) {
                 List<String> initialSelected = model.getInitialSelectedArtistNames().getValue();
-                Set<Integer> selected = defineSelectedPositions(artists,
+                Set<Integer> selected = definePositionsOfSelectedNames(names,
                         new HashSet<>(initialSelected));
 
                 return builder
@@ -144,7 +144,7 @@ public class ArtistImportPresenter extends BasePresenter<ArtistImportUiModel> {
             } else if (selectAll) {
                 return builder
                         .firstLoading(false)
-                        .selectedArtistPositions(selectAllPositions(artists))
+                        .selectedArtistPositions(selectAllPositions(names))
                         .build();
             }
 
@@ -240,25 +240,25 @@ public class ArtistImportPresenter extends BasePresenter<ArtistImportUiModel> {
                 .build();
     }
 
-    private static Set<Integer> defineSelectedPositions(List<String> artists,
-                                                        Set<String> selectedNames) {
-        return Observable.fromIterable(artists)
-                .scan(Pair.<Integer, String>create(-1, null),
-                        (previous, name) -> Pair.create(previous.first + 1, name)
+    private static Set<Integer> definePositionsOfSelectedNames(List<String> allNames,
+                                                               Set<String> selectedNames) {
+        return Observable.fromIterable(allNames)
+                .zipWith(
+                        Observable.range(0, allNames.size()),
+                        (name, position) -> Pair.create(position, name)
                 )
-                .filter(positionAndArtist -> positionAndArtist.first != -1
-                        && selectedNames.contains(positionAndArtist.second)
-                )
-                .map(positionAndArtist -> positionAndArtist.first)
+                .filter(positionAndName -> selectedNames.contains(positionAndName.second))
+                .map(positionAndName -> positionAndName.first)
                 .reduce(new HashSet<Integer>(), (positions, position) -> {
                     positions.add(position);
+
                     return positions;
                 })
                 .blockingGet();
     }
 
-    private static Set<Integer> selectAllPositions(List<String> artists) {
-        List<Integer> selectedPositions = Observable.range(0, artists.size())
+    private static Set<Integer> selectAllPositions(List<String> names) {
+        List<Integer> selectedPositions = Observable.range(0, names.size())
                 .toList()
                 .blockingGet();
 

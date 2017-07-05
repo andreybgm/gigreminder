@@ -99,7 +99,7 @@ public class LocationChoiceActivity extends AppCompatActivity {
 
         compositeDisposable.add(
                 presenter.getUiModels()
-                        .compose(RxUtils.observeOnUi())
+                        .compose(RxUtils.observeOnUiWithDebounce())
                         .subscribe(this::acceptNewUiModel)
         );
     }
