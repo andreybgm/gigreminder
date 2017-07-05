@@ -1,5 +1,7 @@
 ## Gig reminder ##
 
+[![Build Status](https://travis-ci.org/andreybgm/gigreminder.svg?branch=master)](https://travis-ci.org/andreybgm/gigreminder)
+
 Gig reminder is an Android app to track the upcoming concerts of artists that you're interested in. It's written for educational purposes and provide only limited functionality. Despite that, it covers many Android development topics, such as the unit and instrumented testing, SQLite, RxJava, network requests, synchronization and others.
 
 ### Used libraries ###
@@ -25,7 +27,7 @@ The app uses public API [kudago.com](https://kudago.com) which is free and doesn
 
 ### State management ###
 
-The app uses reactive state management approach that is perfectly explained in [Jake Wharton’s talk](https://youtu.be/0IKHxjkgop4?t=2885).
+The app uses a reactive state management approach that is perfectly explained in [Jake Wharton’s talk](https://youtu.be/0IKHxjkgop4?t=2885).
 
 ### The demo ###
 
