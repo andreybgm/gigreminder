@@ -7,7 +7,7 @@ import io.github.andreybgm.gigreminder.data.Artist;
 import io.github.andreybgm.gigreminder.data.Concert;
 import io.github.andreybgm.gigreminder.data.Location;
 import io.github.andreybgm.gigreminder.data.SyncState;
-import io.github.andreybgm.gigreminder.repository.entityrepository.SyncResult;
+import io.github.andreybgm.gigreminder.repository.sync.AppSyncResult;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -59,7 +59,7 @@ public interface DataSource {
 
     Completable saveSyncState(SyncState syncState);
 
-    Single<SyncResult> syncData(Date currentTime, long relevancePeriodHours);
+    Single<AppSyncResult> syncData(Date currentTime, long relevancePeriodHours);
 
     void onSyncInterrupted();
 

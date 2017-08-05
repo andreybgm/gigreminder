@@ -20,8 +20,8 @@ import io.github.andreybgm.gigreminder.repository.entityrepository.ConcertReposi
 import io.github.andreybgm.gigreminder.repository.entityrepository.Dependencies;
 import io.github.andreybgm.gigreminder.repository.entityrepository.LocationRepository;
 import io.github.andreybgm.gigreminder.repository.entityrepository.SyncRepository;
-import io.github.andreybgm.gigreminder.repository.entityrepository.SyncResult;
 import io.github.andreybgm.gigreminder.repository.entityrepository.SyncStateRepository;
+import io.github.andreybgm.gigreminder.repository.sync.AppSyncResult;
 import io.github.andreybgm.gigreminder.utils.schedulers.DefaultSchedulerProvider;
 import io.github.andreybgm.gigreminder.utils.schedulers.SchedulerProvider;
 import io.reactivex.Completable;
@@ -178,7 +178,7 @@ public class Repository implements DataSource {
     }
 
     @Override
-    public Single<SyncResult> syncData(Date currentTime, long relevancePeriodHours) {
+    public Single<AppSyncResult> syncData(Date currentTime, long relevancePeriodHours) {
         return syncRepository.syncData(currentTime, relevancePeriodHours);
     }
 

@@ -1,25 +1,20 @@
 package io.github.andreybgm.gigreminder.repository.entityrepository;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v7.app.NotificationCompat;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.squareup.sqlbrite.BriteDatabase;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import io.github.andreybgm.gigreminder.BuildConfig;
-import io.github.andreybgm.gigreminder.R;
 import io.github.andreybgm.gigreminder.api.ApiFactory;
 import io.github.andreybgm.gigreminder.api.ConcertService;
 import io.github.andreybgm.gigreminder.api.response.EventResponse;
@@ -29,16 +24,18 @@ import io.github.andreybgm.gigreminder.data.Artist;
 import io.github.andreybgm.gigreminder.data.Concert;
 import io.github.andreybgm.gigreminder.data.Location;
 import io.github.andreybgm.gigreminder.data.SyncState;
+import io.github.andreybgm.gigreminder.repository.db.Contract.ConcertsTable;
+import io.github.andreybgm.gigreminder.repository.sync.AppSyncResult;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncEventBus;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncFinishEvent;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncStartEvent;
-import io.github.andreybgm.gigreminder.screen.concertdetails.ConcertDetailsActivity;
-import io.github.andreybgm.gigreminder.screen.main.MainActivity;
 import io.github.andreybgm.gigreminder.utils.Pair;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 
 public class SyncRepository extends BaseEntityRepository {
+
+    public static final int PAST_CONCERT_KEEPING_PERIOD_IN_DAYS = 7;
 
     private static final String LOG_TAG = SyncRepository.class.getSimpleName();
     private static final String EVENT_CATEGORY_CONCERT = "concert";
@@ -53,7 +50,7 @@ public class SyncRepository extends BaseEntityRepository {
         syncStateRepository = new SyncStateRepository(dependencies);
     }
 
-    public Single<SyncResult> syncData(Date currentTime, long relevancePeriodHours) {
+    public Single<AppSyncResult> syncData(Date currentTime, long relevancePeriodHours) {
         ConcertService apiService = ApiFactory.getConcertService();
 
         return syncStateRepository.getSyncStatesToUpdate(currentTime, relevancePeriodHours)
@@ -66,9 +63,8 @@ public class SyncRepository extends BaseEntityRepository {
                 })
                 .toObservable()
                 .flatMap(Observable::fromIterable)
-                .flatMap(syncState -> sync(syncState, apiService).toObservable())
-                .reduceWith(SyncResult::new, SyncResult::mergeWith)
-                .doOnSuccess(this::sendNotification)
+                .flatMap(syncState -> sync(syncState, apiService, currentTime).toObservable())
+                .reduceWith(AppSyncResult::new, AppSyncResult::mergeWith)
                 .doOnEvent((r, e) -> {
                     if (BuildConfig.DEBUG) {
                         Log.d(LOG_TAG, "Sync is finished");
@@ -86,68 +82,12 @@ public class SyncRepository extends BaseEntityRepository {
         sendSyncFinishEvent();
     }
 
-    private void sendNotification(SyncResult syncResult) {
-        List<Concert> newConcerts = syncResult.getNewConcerts();
-
-        if (newConcerts.size() == 0) {
-            return;
-        }
-
-        final int pendingIntentRequestCode = 0;
-        final int pendingIntentFlags = PendingIntent.FLAG_CANCEL_CURRENT;
-        final PendingIntent pendingIntent;
-        final String contentTitle;
-        final String contentText;
-
-        if (newConcerts.size() == 1) {
-            Concert concert = newConcerts.get(0);
-            Intent intent = ConcertDetailsActivity.makeIntent(context, concert);
-
-            pendingIntent = TaskStackBuilder.create(context)
-                    .addParentStack(ConcertDetailsActivity.class)
-                    .addNextIntent(intent)
-                    .getPendingIntent(pendingIntentRequestCode, pendingIntentFlags);
-
-            contentTitle = context.getString(R.string.notification_new_concert);
-            contentText = concert.getArtist().getName();
-        } else {
-            Intent intent = MainActivity.makeIntent(context);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-            pendingIntent = PendingIntent.getActivity(
-                    context, pendingIntentRequestCode, intent, pendingIntentFlags);
-
-            contentTitle = context.getString(R.string.notification_new_concerts);
-            contentText = TextUtils.join(", ",
-                    Observable.fromIterable(newConcerts)
-                            .map(Concert::getArtist)
-                            .distinct()
-                            .map(Artist::getName)
-                            .sorted(String::compareTo)
-                            .take(10)
-                            .toList()
-                            .blockingGet());
-        }
-
-        Notification notification = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.notification_new_concert)
-                .setContentTitle(contentTitle)
-                .setContentText(contentText)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .build();
-
-        NotificationManager systemService =
-                (NotificationManager) context
-                        .getSystemService(Context.NOTIFICATION_SERVICE);
-        systemService.notify(0, notification);
-    }
-
     private void sendSyncFinishEvent() {
         SyncEventBus.sendEvent(SyncFinishEvent.create());
     }
 
-    private Single<SyncResult> sync(SyncState syncState, ConcertService apiService) {
+    private Single<AppSyncResult> sync(SyncState syncState, ConcertService apiService,
+                                       Date currentTime) {
         Artist artist = syncState.getArtist();
         Location location = syncState.getLocation();
 
@@ -167,8 +107,80 @@ public class SyncRepository extends BaseEntityRepository {
                         transaction.markSuccessful();
                     }
 
-                    return new SyncResult(savingResult.getNewConcerts());
+                    List<Concert> deletedConcerts = deleteNonexistentConcerts(artist, location,
+                            concerts, currentTime);
+                    List<Concert> newConcerts = Observable.fromIterable(
+                            savingResult.getNewConcerts())
+                            .filter(concert -> !deletedConcerts.contains(concert))
+                            .toList().blockingGet();
+
+                    return new AppSyncResult(newConcerts);
                 });
+    }
+    private List<Concert> deleteNonexistentConcerts(Artist artist, Location location,
+                                                    List<Concert> apiConcerts, Date currentTime) {
+        Set<String> loadedApiCodes = Observable.fromIterable(apiConcerts)
+                .map(Concert::getApiCode)
+                .reduce(new HashSet<String>(), (set, apiCode) -> {
+                    set.add(apiCode);
+                    return set;
+                })
+                .blockingGet();
+        List<Concert> allConcert = dbHelper.selectByCondition(
+                entityRegistry.concert,
+                ConcertsTable.COLUMN_ARTIST_ID + "=?"
+                        + " AND " + ConcertsTable.COLUMN_LOCATION_ID + "=?",
+                artist.getId(),
+                location.getId()
+        );
+
+        Date currentDate = beginOfDay(currentTime);
+        Date maxKeepingDate = addDays(currentDate, -PAST_CONCERT_KEEPING_PERIOD_IN_DAYS);
+        List<Concert> concertsToDelete = Observable.fromIterable(allConcert)
+                .filter(concert -> {
+                    Date concertDate = beginOfDay(concert.getDate());
+                    boolean concertToday = concertDate.equals(currentDate);
+                    boolean concertInFuture = concertDate.compareTo(currentDate) > 0;
+                    boolean concertExists = loadedApiCodes.contains(concert.getApiCode());
+                    boolean concertIsTooOld = concertDate.compareTo(maxKeepingDate) < 0;
+                    boolean shouldKeepConcert;
+
+                    if (concertToday) {
+                        shouldKeepConcert = true;
+                    } else if (concertInFuture) {
+                        shouldKeepConcert = concertExists;
+                    } else {
+                        shouldKeepConcert = !concertIsTooOld;
+                    }
+
+                    return !shouldKeepConcert;
+                })
+                .toList()
+                .blockingGet();
+        concertRepository.blockingDeleteConcerts(concertsToDelete);
+
+        return concertsToDelete;
+    }
+
+    private Date addDays(Date date, int days) {
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        calendar.add(Calendar.DAY_OF_MONTH, days);
+
+        return calendar.getTime();
+    }
+
+    private Date beginOfDay(Date date) {
+        GregorianCalendar dateCal = new GregorianCalendar();
+        dateCal.setTime(date);
+
+        GregorianCalendar beginOfDayCal = new GregorianCalendar(
+                dateCal.get(Calendar.YEAR),
+                dateCal.get(Calendar.MONTH),
+                dateCal.get(Calendar.DAY_OF_MONTH)
+        );
+
+        return beginOfDayCal.getTime();
     }
 
     private Observable<Concert> loadConcerts(Artist artist, Location location,
@@ -177,7 +189,6 @@ public class SyncRepository extends BaseEntityRepository {
 
         return apiService.search(name, location.getApiCode())
                 .flatMap(searchResponse -> Observable.fromIterable(searchResponse.getResults()))
-//                .filter(searchResult -> isResultTitleContainName(searchResult, name))
                 .flatMap(searchResult -> loadConcertData(searchResult, name, apiService))
                 .map(concertData -> {
                     SearchResponse.Result searchResult = concertData.searchResult;

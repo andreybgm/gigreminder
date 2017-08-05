@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.github.andreybgm.gigreminder.data.Concert;
-import io.github.andreybgm.gigreminder.repository.db.Contract;
+import io.github.andreybgm.gigreminder.repository.db.Contract.ConcertsTable;
 import io.github.andreybgm.gigreminder.repository.db.DbUtils;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -28,7 +28,7 @@ public class ConcertRepository extends BaseEntityRepository {
 
     public Observable<List<Concert>> getConcerts() {
         return dbHelper.selectAllAsNotifiedObservable(entityRegistry.concert,
-                Contract.ConcertsTable.COLUMN_DATE + " ASC, " + Contract.ConcertsTable.COLUMN_ID);
+                ConcertsTable.COLUMN_DATE + " ASC, " + ConcertsTable.COLUMN_ID);
     }
 
     public Single<Concert> getConcert(String id) {
@@ -47,11 +47,11 @@ public class ConcertRepository extends BaseEntityRepository {
 
     SavingResult blockingSave(List<Concert> concerts) {
         String concertSelectionSql = "SELECT "
-                + Contract.ConcertsTable.COLUMN_ID
+                + ConcertsTable.COLUMN_ID
                 + " FROM "
-                + Contract.ConcertsTable.TABLE_NAME
+                + ConcertsTable.TABLE_NAME
                 + " WHERE "
-                + Contract.ConcertsTable.COLUMN_API_CODE + "=?";
+                + ConcertsTable.COLUMN_API_CODE + "=?";
 
         List<Concert> newConcerts = new ArrayList<>();
 
@@ -68,11 +68,11 @@ public class ConcertRepository extends BaseEntityRepository {
 
                             if (concertExists) {
                                 String id = DbUtils.getStringFromCursor(cursor,
-                                        Contract.ConcertsTable.COLUMN_ID);
+                                        ConcertsTable.COLUMN_ID);
                                 updateConcert(id, concert);
                             } else {
                                 dbHelper.getBriteDatabase().insert(
-                                        Contract.ConcertsTable.TABLE_NAME,
+                                        ConcertsTable.TABLE_NAME,
                                         entityRegistry.concert.toContentValues(concert));
                                 newConcerts.add(concert);
                             }
@@ -86,10 +86,17 @@ public class ConcertRepository extends BaseEntityRepository {
 
     public Completable deleteConcert(Concert concert) {
         return Completable.fromAction(() ->
-                dbHelper.blockingDeleteByValue(entityRegistry.concert.getTableName(),
-                        entityRegistry.concert.getIdColumn(), concert.getId())
+                blockingDeleteConcerts(Collections.singletonList(concert))
         )
                 .subscribeOn(schedulerProvider.io());
+    }
+
+    void blockingDeleteConcerts(List<Concert> concerts) {
+        Observable.fromIterable(concerts).blockingForEach(concert ->
+                dbHelper.blockingDeleteByValue(
+                        entityRegistry.concert.getTableName(),
+                        entityRegistry.concert.getIdColumn(), concert.getId())
+        );
     }
 
     private void updateConcert(String id, Concert concert) {
@@ -100,9 +107,9 @@ public class ConcertRepository extends BaseEntityRepository {
                 .url(concert.getUrl())
                 .imageUrl(concert.getImageUrl())
                 .build();
-        dbHelper.getBriteDatabase().update(Contract.ConcertsTable.TABLE_NAME,
+        dbHelper.getBriteDatabase().update(ConcertsTable.TABLE_NAME,
                 entityRegistry.concert.toContentValues(updatedConcert),
-                Contract.ConcertsTable.COLUMN_ID + "=?",
+                ConcertsTable.COLUMN_ID + "=?",
                 id);
     }
 

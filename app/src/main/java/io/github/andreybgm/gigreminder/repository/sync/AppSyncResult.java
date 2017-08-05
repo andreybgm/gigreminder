@@ -1,4 +1,4 @@
-package io.github.andreybgm.gigreminder.repository.entityrepository;
+package io.github.andreybgm.gigreminder.repository.sync;
 
 import android.support.annotation.NonNull;
 
@@ -7,15 +7,15 @@ import java.util.List;
 
 import io.github.andreybgm.gigreminder.data.Concert;
 
-public class SyncResult {
+public class AppSyncResult {
     @NonNull
     private final List<Concert> newConcerts;
 
-    SyncResult() {
+    public AppSyncResult() {
         this.newConcerts = new ArrayList<>();
     }
 
-    SyncResult(@NonNull List<Concert> newConcerts) {
+    public AppSyncResult(@NonNull List<Concert> newConcerts) {
         this.newConcerts = newConcerts;
     }
 
@@ -24,7 +24,7 @@ public class SyncResult {
         return newConcerts;
     }
 
-    SyncResult mergeWith(SyncResult item) {
+    public AppSyncResult mergeWith(AppSyncResult item) {
         newConcerts.addAll(item.getNewConcerts());
 
         return this;

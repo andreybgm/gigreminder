@@ -38,16 +38,15 @@ public class BriteDatabaseHelper {
     }
 
     public <T> List<T> selectAll(BaseEntity<T> entity, String order) {
-        String sql = createSelectAllQuery(entity, order);
-        List<T> objects = new ArrayList<>();
+        return select(entity, createSelectAllQuery(entity, order));
+    }
 
-        try (Cursor cursor = briteDatabase.query(sql)) {
-            while (cursor.moveToNext()) {
-                objects.add(entity.fromCursor(cursor));
-            }
-        }
+    public <T> List<T> selectByCondition(BaseEntity<T> entity, String where, String... args) {
+        String columns = makeColumnsString(entity);
+        String sql = String.format("SELECT %s FROM %s WHERE %s",
+                columns, entity.getTableName(), where);
 
-        return objects;
+        return select(entity, sql, args);
     }
 
     public <T> String makeColumnsString(BaseEntity<T> entity) {
@@ -146,5 +145,17 @@ public class BriteDatabaseHelper {
 
         return String.format("SELECT %s FROM %s ORDER BY %s",
                 columns, entity.getTableName(), order);
+    }
+
+    private <T> List<T> select(BaseEntity<T> entity, String sql, String... args) {
+        List<T> objects = new ArrayList<>();
+
+        try (Cursor cursor = briteDatabase.query(sql, args)) {
+            while (cursor.moveToNext()) {
+                objects.add(entity.fromCursor(cursor));
+            }
+        }
+
+        return objects;
     }
 }

@@ -10,17 +10,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import io.github.andreybgm.gigreminder.data.Artist;
 import io.github.andreybgm.gigreminder.data.Concert;
 import io.github.andreybgm.gigreminder.data.Location;
 import io.github.andreybgm.gigreminder.eventbus.BaseEvent;
-import io.github.andreybgm.gigreminder.repository.entityrepository.SyncResult;
+import io.github.andreybgm.gigreminder.repository.entityrepository.SyncRepository;
+import io.github.andreybgm.gigreminder.repository.sync.AppSyncResult;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncEventBus;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncFinishEvent;
 import io.github.andreybgm.gigreminder.repository.sync.eventbus.SyncStartEvent;
@@ -34,7 +35,7 @@ public class SyncRepositoryTest extends BaseRepositoryTest {
 
     private static final long MAX_TIMEOUT_MILLIS = 3000L;
     private static final int RELEVANCE_PERIOD_HOURS = 12;
-    private static final Date CURRENT_TIME = new Date(TimeUnit.HOURS.toMillis(24));
+    private static final Date CURRENT_TIME = new GregorianCalendar(2016, 11, 31).getTime();
 
     private DataSource repository;
     private Artist artist1;
@@ -107,7 +108,7 @@ public class SyncRepositoryTest extends BaseRepositoryTest {
         repository.saveLocation(location1).blockingAwait();
 
         // action
-        Single<SyncResult> syncResultSingle =
+        Single<AppSyncResult> syncResultSingle =
                 repository.syncData(CURRENT_TIME, RELEVANCE_PERIOD_HOURS);
 
         // check
@@ -171,7 +172,7 @@ public class SyncRepositoryTest extends BaseRepositoryTest {
     }
 
     @Test
-    public void syncDataWhenTwoConcertExists() throws Exception {
+    public void syncDataWhenTwoConcertExistsShouldUpdateThem() throws Exception {
         repository.saveArtist(artist1).blockingAwait();
         repository.saveLocations(Arrays.asList(location1, location2)).blockingAwait();
         repository.saveConcerts(
@@ -197,6 +198,70 @@ public class SyncRepositoryTest extends BaseRepositoryTest {
                     assertThat(actualConcerts)
                             .hasSize(2)
                             .containsOnly(concertArtist1Location1, concertArtist1Location2);
+
+                    return true;
+                });
+    }
+
+    @Test
+    public void cleanConcertsWhenSync() throws Exception {
+        Concert todayConcert = new Concert.Builder("TODAY", "9001", artist2, location2)
+                .date(CURRENT_TIME)
+                .place("Place2001")
+                .imageUrl("http://example.com/img1001.jpg")
+                .url("http://example.com/events/1005")
+                .build();
+
+        GregorianCalendar past = new GregorianCalendar();
+        past.setTime(CURRENT_TIME);
+        past.add(Calendar.DAY_OF_MONTH, -SyncRepository.PAST_CONCERT_KEEPING_PERIOD_IN_DAYS);
+        Concert pastConcert = new Concert.Builder("PAST", "9002", artist2, location2)
+                .date(past.getTime())
+                .place("Place2001")
+                .imageUrl("http://example.com/img1001.jpg")
+                .url("http://example.com/events/1005")
+                .build();
+
+        GregorianCalendar tooOldDate = new GregorianCalendar();
+        tooOldDate.setTime(CURRENT_TIME);
+        tooOldDate.add(Calendar.DAY_OF_MONTH,
+                -(SyncRepository.PAST_CONCERT_KEEPING_PERIOD_IN_DAYS + 1));
+        Concert tooOldConcert = new Concert.Builder("TOO_OLD", "9003", artist2, location2)
+                .date(tooOldDate.getTime())
+                .place("Place2001")
+                .imageUrl("http://example.com/img1001.jpg")
+                .url("http://example.com/events/1005")
+                .build();
+
+        GregorianCalendar tomorrow = new GregorianCalendar();
+        tomorrow.setTime(CURRENT_TIME);
+        tomorrow.add(Calendar.DAY_OF_MONTH, 1);
+        Concert nonexistentConcert = new Concert.Builder("NONEXISTENT", "9004", artist2, location2)
+                .date(tomorrow.getTime())
+                .place("Place2001")
+                .imageUrl("http://example.com/img1001.jpg")
+                .url("http://example.com/events/1005")
+                .build();
+
+        // today and past (during the keeping period) concerts should always stay
+        // the too old past concert should be deleted
+        // the future concert should be deleted if it doesn't exist on the server
+        repository.saveArtist(artist2).blockingAwait();
+        repository.saveLocation(location2).blockingAwait();
+        repository.saveConcerts(Arrays.asList(
+                todayConcert, pastConcert, tooOldConcert, nonexistentConcert))
+                .blockingAwait();
+
+        repository.syncData(CURRENT_TIME, RELEVANCE_PERIOD_HOURS).blockingGet();
+
+        repository.getConcerts()
+                .test()
+                .awaitCount(1)
+                .assertNoErrors()
+                .assertValue(actualConcerts -> {
+                    assertThat(actualConcerts)
+                            .hasSize(2)
+                            .containsOnly(todayConcert, pastConcert);
 
                     return true;
                 });
