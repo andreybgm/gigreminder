@@ -27,7 +27,7 @@ public class MockingInterceptor implements Interceptor {
     private static final Pattern SEARCH_PATTERN = Pattern.compile(
             ".*/search/\\?.*q=(.+).*&location=(.+)");
     private static final Pattern EVENTS_PATTERN = Pattern.compile(
-            ".*/events/(\\d+)/\\?fields=id,categories,title,short_title,site_url,dates,place");
+            ".*/events/(\\d+)/\\?fields=id,categories,title,short_title,site_url,dates,place&expand=place");
     private static final Pattern PLACES_PATTERN = Pattern.compile(
             ".*/places/(\\d+)/\\?fields=id,title,short_title,address");
     private static final Pattern LOCATIONS_PATTERN = Pattern.compile(
@@ -65,6 +65,7 @@ public class MockingInterceptor implements Interceptor {
                                 "triple%20artist", "lc1")
                         .value(RESPONSE_FOLDER + "search_empty_result.json",
                                 "triple%20artist", "lc2")
+                        .value(RESPONSE_FOLDER + "search_AR-6_LC-1.json", "artist6", "lc1")
                 )
                 .patternHandler(EVENTS_PATTERN, PathHandler.Values.<String>create()
                         .value(RESPONSE_FOLDER + "events_1001_AR-1_LC-1.json", "1001")
@@ -75,7 +76,8 @@ public class MockingInterceptor implements Interceptor {
                         .value(RESPONSE_FOLDER + "events_1007_AR-5_LC-1.json", "1007")
                         .value(RESPONSE_FOLDER + "events_1008_AR-5_LC-2.json", "1008")
                         .value(RESPONSE_FOLDER + "events_1009_AR-TRIPLE_LC-1.json", "1009")
-                        .value(RESPONSE_FOLDER + "events_1005_AR-LONG_LC-1.json", "1005"))
+                        .value(RESPONSE_FOLDER + "events_1005_AR-LONG_LC-1.json", "1005")
+                        .value(RESPONSE_FOLDER + "events_1010_AR-6_LC-1.json", "1010"))
                 .patternHandler(PLACES_PATTERN, PathHandler.Values.<String>create()
                         .value(RESPONSE_FOLDER + "places_2001_LC-1.json", "2001")
                         .value(RESPONSE_FOLDER + "places_2002_LC-2.json", "2002"))

@@ -74,8 +74,22 @@ public class EventResponse {
         @SerializedName("id")
         private int id;
 
+        @SerializedName("title")
+        private String title;
+
+        @SerializedName("is_stub")
+        private boolean stub;
+
         public int getId() {
             return id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public boolean isStub() {
+            return stub;
         }
     }
 }

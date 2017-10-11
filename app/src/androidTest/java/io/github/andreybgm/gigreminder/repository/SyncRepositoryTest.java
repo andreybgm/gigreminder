@@ -294,6 +294,45 @@ public class SyncRepositoryTest extends BaseRepositoryTest {
                 });
     }
 
+    @Test
+    public void syncDataWhenPlaceIsStubShouldLoadEventAnyway() throws Exception {
+        Artist artist = new Artist("AR-6", "Artist6");
+        Concert expectedConcert = new Concert.Builder("CN-1-10", "1010", artist, location1)
+                .date((new GregorianCalendar(2017, 1, 1, 20, 30)).getTime())
+                .place("Place4041")
+                .imageUrl("http://example.com/img1010.jpg")
+                .url("http://example.com/events/1010")
+                .build();
+        repository.saveArtist(artist).blockingAwait();
+        repository.saveLocation(location1).blockingAwait();
+
+        repository.syncData(CURRENT_TIME, RELEVANCE_PERIOD_HOURS)
+                .test()
+                .await()
+                .assertNoErrors()
+                .assertComplete()
+                .assertValue(syncResult -> {
+                    assertThat(syncResult.getNewConcerts())
+                            .hasSize(1)
+                            .usingElementComparator(this::compareIgnoringId)
+                            .contains(expectedConcert);
+
+                    return true;
+                });
+
+        repository.getConcerts()
+                .test()
+                .awaitCount(1)
+                .assertValue(actualConcerts -> {
+                    assertThat(actualConcerts)
+                            .hasSize(1)
+                            .usingElementComparator(this::compareIgnoringId)
+                            .containsOnly(expectedConcert);
+
+                    return true;
+                });
+    }
+
     private void checkSyncStartAndFinishEvents(ConnectableObservable<BaseEvent> syncEventBus) {
         syncEventBus
                 .test()

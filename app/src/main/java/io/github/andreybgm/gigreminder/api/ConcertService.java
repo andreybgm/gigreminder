@@ -16,7 +16,7 @@ public interface ConcertService {
     Observable<SearchResponse> search(@Query("q") String artistName,
                                       @Query("location") String location);
 
-    @GET("events/{id}/?fields=id,categories,title,short_title,site_url,dates,place")
+    @GET("events/{id}/?fields=id,categories,title,short_title,site_url,dates,place&expand=place")
     Observable<EventResponse> eventDetails(@Path("id") int id);
 
     @GET("places/{id}/?fields=id,title,short_title,address")

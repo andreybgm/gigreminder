@@ -12,9 +12,6 @@ public class PlaceResponse {
     @SerializedName("short_title")
     private String shortTitle;
 
-    @SerializedName("address")
-    private String address;
-
     public int getId() {
         return id;
     }
@@ -25,9 +22,5 @@ public class PlaceResponse {
 
     public String getShortTitle() {
         return shortTitle;
-    }
-
-    public String getAddress() {
-        return address;
     }
 }

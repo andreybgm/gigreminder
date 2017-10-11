@@ -18,7 +18,6 @@ import io.github.andreybgm.gigreminder.BuildConfig;
 import io.github.andreybgm.gigreminder.api.ApiFactory;
 import io.github.andreybgm.gigreminder.api.ConcertService;
 import io.github.andreybgm.gigreminder.api.response.EventResponse;
-import io.github.andreybgm.gigreminder.api.response.PlaceResponse;
 import io.github.andreybgm.gigreminder.api.response.SearchResponse;
 import io.github.andreybgm.gigreminder.data.Artist;
 import io.github.andreybgm.gigreminder.data.Concert;
@@ -117,6 +116,7 @@ public class SyncRepository extends BaseEntityRepository {
                     return new AppSyncResult(newConcerts);
                 });
     }
+
     private List<Concert> deleteNonexistentConcerts(Artist artist, Location location,
                                                     List<Concert> apiConcerts, Date currentTime) {
         Set<String> loadedApiCodes = Observable.fromIterable(apiConcerts)
@@ -185,21 +185,21 @@ public class SyncRepository extends BaseEntityRepository {
 
     private Observable<Concert> loadConcerts(Artist artist, Location location,
                                              ConcertService apiService) {
-        String name = artist.getName().toLowerCase();
+        String artistName = artist.getName().toLowerCase();
 
-        return apiService.search(name, location.getApiCode())
+        return apiService.search(artistName, location.getApiCode())
                 .flatMap(searchResponse -> Observable.fromIterable(searchResponse.getResults()))
-                .flatMap(searchResult -> loadConcertData(searchResult, name, apiService))
+                .flatMap(searchResult -> loadConcertData(searchResult, artistName, apiService))
                 .map(concertData -> {
-                    SearchResponse.Result searchResult = concertData.searchResult;
-                    EventResponse eventResponse = concertData.eventResponse;
-                    PlaceResponse placeResponse = concertData.placeResponse;
+                    SearchResponse.Result searchResult = concertData.getSearchResult();
+                    EventResponse eventResponse = concertData.getEventResponse();
+                    PlaceData placeData = concertData.getPlaceData();
 
                     String apiCode = String.valueOf(eventResponse.getId());
                     Date date = new Date(TimeUnit.SECONDS.toMillis(
                             eventResponse.getDates().get(0).getStart()));
                     String imageUrl = getImageUrl(searchResult);
-                    String placeTitle = getPlaceTitle(placeResponse);
+                    String placeTitle = getPlaceTitle(placeData);
 
                     return new Concert.Builder(apiCode, artist, location)
                             .date(date)
@@ -211,27 +211,42 @@ public class SyncRepository extends BaseEntityRepository {
     }
 
     private Observable<ConcertData> loadConcertData(SearchResponse.Result searchResult,
-                                                    String name,
+                                                    String artistName,
                                                     ConcertService apiService) {
         return apiService.eventDetails(searchResult.getId())
                 .filter(eventResponse -> isEventConcert(eventResponse)
                         && isEventResponseHaveDate(eventResponse)
-                        && isEventTitleContainName(eventResponse, name)
+                        && isEventTitleContainArtistName(eventResponse, artistName)
                 )
-                .flatMap(eventResponse ->
-                        apiService.placeDetails(eventResponse.getPlace().getId())
-                                .map(placeResponse -> Pair.create(eventResponse, placeResponse))
+                .flatMap(eventResponse -> {
+                            EventResponse.Place place = eventResponse.getPlace();
+
+                            if (place.isStub()) {
+                                PlaceData placeData = new PlaceData(place.getTitle(), "");
+
+                                return Observable.just(Pair.create(eventResponse, placeData));
+                            } else {
+                                return apiService.placeDetails(place.getId())
+                                        .map(placeResponse -> {
+                                            PlaceData placeData = new PlaceData(
+                                                    placeResponse.getTitle(),
+                                                    placeResponse.getShortTitle());
+
+                                            return Pair.create(eventResponse, placeData);
+                                        });
+                            }
+                        }
                 )
                 .map(eventAndPlace ->
                         new ConcertData(searchResult, eventAndPlace.first, eventAndPlace.second));
     }
 
-    private String getPlaceTitle(PlaceResponse placeResponse) {
-        if (!placeResponse.getShortTitle().isEmpty()) {
-            return placeResponse.getShortTitle();
+    private String getPlaceTitle(PlaceData placeData) {
+        if (!placeData.getShortTitle().isEmpty()) {
+            return placeData.getShortTitle();
         }
 
-        return placeResponse.getTitle();
+        return placeData.getTitle();
     }
 
     private String getImageUrl(SearchResponse.Result searchResult) {
@@ -253,11 +268,11 @@ public class SyncRepository extends BaseEntityRepository {
 
     }
 
-    private boolean isEventTitleContainName(EventResponse eventResponse, String name) {
+    private boolean isEventTitleContainArtistName(EventResponse eventResponse, String artistName) {
         String shortTitle = eventResponse.getShortTitle();
-        boolean shortNameMatches = shortTitle != null && shortTitle.equalsIgnoreCase(name);
+        boolean shortNameMatches = shortTitle != null && shortTitle.equalsIgnoreCase(artistName);
 
-        return shortNameMatches || isFullTitleContainName(eventResponse, name);
+        return shortNameMatches || isFullTitleContainName(eventResponse, artistName);
     }
 
     private boolean isFullTitleContainName(EventResponse eventResponse, String name) {
@@ -278,13 +293,43 @@ public class SyncRepository extends BaseEntityRepository {
     private static class ConcertData {
         final SearchResponse.Result searchResult;
         final EventResponse eventResponse;
-        final PlaceResponse placeResponse;
+        final PlaceData placeData;
 
         ConcertData(SearchResponse.Result searchResult, EventResponse eventResponse,
-                    PlaceResponse placeResponse) {
+                    PlaceData placeData) {
             this.searchResult = searchResult;
             this.eventResponse = eventResponse;
-            this.placeResponse = placeResponse;
+            this.placeData = placeData;
+        }
+
+        SearchResponse.Result getSearchResult() {
+            return searchResult;
+        }
+
+        EventResponse getEventResponse() {
+            return eventResponse;
+        }
+
+        PlaceData getPlaceData() {
+            return placeData;
+        }
+    }
+
+    private static class PlaceData {
+        final String title;
+        final String shortTitle;
+
+        private PlaceData(String title, String shortTitle) {
+            this.title = title;
+            this.shortTitle = shortTitle;
+        }
+
+        String getTitle() {
+            return title;
+        }
+
+        String getShortTitle() {
+            return shortTitle;
         }
     }
 }
